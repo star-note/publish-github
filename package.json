@@ -1,0 +1,74 @@
+{
+  "name": "electron-react-puppeteer-demo",
+  "description": "A foundation for scalable desktop apps",
+  "scripts": {
+    "build": "webpack --config ./webpack.config.js --entry=web/index.ts"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "cross-env NODE_ENV=development eslint --cache"
+    ],
+    "*.json,.{eslintrc,prettierrc}": [
+      "prettier --ignore-path .eslintignore --parser json --write"
+    ],
+    "*.{css,scss}": [
+      "prettier --ignore-path .eslintignore --single-quote --write"
+    ],
+    "*.{html,md,yml}": [
+      "prettier --ignore-path .eslintignore --single-quote --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+  },
+  "author": {
+    "name": "Electron React Boilerplate Maintainers",
+    "email": "electronreactboilerplate@gmail.com",
+    "url": "https://electron-react-boilerplate.js.org"
+  },
+  "contributors": [
+    {
+      "name": "Amila Welihinda",
+      "email": "amilajack@gmail.com",
+      "url": "https://github.com/amilajack"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+  },
+  "keywords": [],
+  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "devDependencies": {
+    "@babel/core": "^7.17.10",
+    "@babel/preset-env": "^7.17.10",
+    "@babel/preset-react": "^7.16.7",
+    "@babel/preset-typescript": "^7.16.7",
+    "babel-loader": "^8.2.5",
+    "clean-webpack-plugin": "^4.0.0",
+    "webpack": "^5.72.1"
+  },
+  "dependencies": {
+    "@octokit/rest": "^18.12.0"
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11"
+  ],
+  "prettier": {
+    "overrides": [
+      {
+        "files": [
+          ".prettierrc",
+          ".eslintrc"
+        ],
+        "options": {
+          "parser": "json"
+        }
+      }
+    ],
+    "singleQuote": true
+  },
+  "sideEffects": false
+}
