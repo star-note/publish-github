@@ -1,8 +1,9 @@
 {
-  "name": "electron-react-puppeteer-demo",
-  "description": "A foundation for scalable desktop apps",
+  "name": "@starnote/publish-github",
+  "version": "0.3.0",
+  "description": "辰记发布Github SDK",
   "scripts": {
-    "build": "webpack --config ./webpack.config.js --entry=web/index.ts"
+    "build": "rm -rf lib && tsc"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -20,37 +21,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+    "url": "git+https://github.com/star-note/publish-github.git"
   },
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://electron-react-boilerplate.js.org"
+    "name": "辰记ludejun",
+    "email": "ludejun@live.cn",
+    "url": "https://github.com/star-note/publish-github"
   },
-  "contributors": [
-    {
-      "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
-      "url": "https://github.com/amilajack"
-    }
-  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+    "url": "https://github.com/star-note/publish-github/issues"
   },
   "keywords": [],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "homepage": "https://github.com/star-note/publish-github",
   "devDependencies": {
-    "@babel/core": "^7.17.10",
-    "@babel/preset-env": "^7.17.10",
-    "@babel/preset-react": "^7.16.7",
-    "@babel/preset-typescript": "^7.16.7",
-    "babel-loader": "^8.2.5",
-    "clean-webpack-plugin": "^4.0.0",
-    "webpack": "^5.72.1"
+    "typescript": "^5.0.4"
   },
   "dependencies": {
-    "@octokit/rest": "^18.12.0"
+    "@octokit/rest": "^18.12.0",
+    "js-base64": "^3.7.2"
   },
   "browserslist": [
     "defaults",
