@@ -1,5 +1,5 @@
 import { checkParams, Config, DomType, editInput, Message } from '../utils';
-import { target } from '../index';
+// import { target } from '../index';
 
 export const startUrl = 'https://www.github.com/login'; // 默认需要开始操作的URL
 export const formConfigs: Config[] = [
@@ -72,7 +72,7 @@ const editRepo = async (
       JSON.stringify(note),
       page,
       (e: unknown) => {
-        postProcess(target.name, { type: 'error', message: String(e) });
+        postProcess('github', { type: 'error', message: String(e) });
       }
     );
   } else {
@@ -86,7 +86,7 @@ const editRepo = async (
       JSON.stringify(note.content),
       page,
       (err: unknown) => {
-        postProcess(target.name, { type: 'error', message: String(err) });
+        postProcess('github', { type: 'error', message: String(err) });
       }
     );
   }
@@ -96,13 +96,13 @@ const editRepo = async (
       page.click('button[type=submit]'),
     ]);
   } catch (e) {
-    postProcess(target.name, {
+    postProcess('github', {
       type: 'error',
       message: '发布失败，可能是发布内容无变更',
     });
   }
 
-  postProcess(target.name, { type: 'success', message: '发布成功' });
+  postProcess('github', { type: 'success', message: '发布成功' });
 };
 
 export const publish = async (
@@ -111,7 +111,7 @@ export const publish = async (
   page: any
 ) => {
   checkParams(payload, formConfigs);
-  postProcess(target.name, { process: 20, message: '开始登录' });
+  postProcess('github', { process: 20, message: '开始登录' });
   const userInput = await page.$('#login_field');
   if (userInput) {
     try {
@@ -131,7 +131,7 @@ export const publish = async (
         );
         console.log('errorTip: ', errorTip);
         if (errorTip && errorTip.indexOf('Incorrect') >= 0) {
-          postProcess(target.name, {
+          postProcess('github', {
             type: 'error',
             message: '登录失败，用户名或密码错误',
           });
@@ -145,7 +145,7 @@ export const publish = async (
       console.log('登录成功');
     } catch (e) {
       console.log('登录失败', e);
-      postProcess(target.name, {
+      postProcess('github', {
         type: 'error',
         message: '登录目标页错误，可能是网络错误需要VPN',
       });
@@ -183,6 +183,6 @@ export const publish = async (
       }
     });
   } else {
-    postProcess(target.name, { type: 'error', message: '发布错误，联系官方' });
+    postProcess('github', { type: 'error', message: '发布错误，联系官方' });
   }
 };
