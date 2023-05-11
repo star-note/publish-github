@@ -32,7 +32,7 @@ const config = {
   output: {
     path: path.join(__dirname, './dist'),
     filename: 'publish.min.js',
-    library: 'StarNotePublish',
+    // library: 'StarNotePublish',
     libraryTarget: 'umd',
     umdNamedDefine: true,
   },

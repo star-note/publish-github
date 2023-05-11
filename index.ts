@@ -1,6 +1,6 @@
-import { formConfigs, publish } from './web';
+import { getForm, publish } from './web';
 import {
-  formConfigs as electronForm,
+  getForm as electronForm,
   publish as electronPublish,
 } from './electron';
 
@@ -12,11 +12,11 @@ export const $publish_github = {
   label: 'Github',
   logo: './icons/icon_128.png',
   web: {
-    form: formConfigs,
+    getForm,
     publish,
   }, // web端发布的配置及方法
   electron: {
-    form: electronForm,
+    getForm: electronForm,
     publish: electronPublish,
   }, // 桌面端发布的配置及方法
   server: {}, // 服务器端发布的配置及方法

@@ -2,7 +2,7 @@ import { checkParams, Config, DomType, editInput, Message } from '../utils';
 // import { target } from '../index';
 
 export const startUrl = 'https://www.github.com/login'; // 默认需要开始操作的URL
-export const formConfigs: Config[] = [
+export const getForm = (note): Config[] => [
   {
     dom: {
       type: DomType.input,
@@ -42,6 +42,29 @@ export const formConfigs: Config[] = [
     },
     label: '仓库名',
     name: 'repo',
+  },
+  {
+    dom: {
+      type: DomType.select,
+    },
+    label: '选择分类',
+    name: 'category',
+    help: {
+      description: '文章的分类，存放目录',
+    },
+  },
+  {
+    dom: {
+      type: DomType.input,
+      defaultValue: note.title,
+      rules: [/\w+/],
+      placeholder: '请输入文件名',
+    },
+    label: '发布文件名',
+    name: 'name',
+    help: {
+      description: '保存的文件名，默认使用文章Title',
+    },
   },
 ];
 

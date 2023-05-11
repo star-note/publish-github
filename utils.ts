@@ -5,11 +5,12 @@ export enum DomType {
   textarea = 'TEXTAREA',
   picker = 'IMAGEPICKER',
   checkbox = 'CHECKBOX',
+  date = 'DATEPICKER',
 }
 export interface Config {
   dom: {
-    type: DomType.input | DomType.checkbox;
-    defaultValue?: string | boolean | null;
+    type: DomType;
+    defaultValue?: string | boolean | number | null;
     rules?: RegExp[];
     placeholder?: string;
     required?: boolean;
