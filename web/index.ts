@@ -7,7 +7,10 @@ export const getForm = (note): Config[] => [
     dom: {
       type: DomType.input,
       defaultValue: null,
-      rules: [/\w+/],
+      rule: {
+        pattern: /\w+/,
+        message: '请输入正确access-token',
+      },
       placeholder: '请输入Github access-token',
       required: true,
     },
@@ -22,7 +25,7 @@ export const getForm = (note): Config[] => [
     dom: {
       type: DomType.input,
       defaultValue: null,
-      rules: [/\w+/],
+      // rule: /\w+/,
       placeholder: '请输入Github用户名',
       required: true,
     },
@@ -37,7 +40,10 @@ export const getForm = (note): Config[] => [
     dom: {
       type: DomType.input,
       defaultValue: 'CHENJI',
-      rules: [/\w+/],
+      rule: {
+        pattern: /[a-zA-Z0-9]+/,
+        message: '请输入正确英文/数字仓库名',
+      },
       placeholder: '请输入仓库名（英文）',
     },
     label: '仓库名',
@@ -46,18 +52,23 @@ export const getForm = (note): Config[] => [
   {
     dom: {
       type: DomType.select,
+      options: ['辰记发布'],
+      defaultValue: '辰记发布',
     },
     label: '选择分类',
     name: 'category',
     help: {
-      description: '文章的分类，存放目录',
+      description: '文章的分类，存放目录，建议添加修改，默认为“辰记发布”',
     },
   },
   {
     dom: {
       type: DomType.input,
       defaultValue: note.title,
-      rules: [/\w+/],
+      // rule: {
+      //   pattern: /\w+/,
+      //   message: '请输入正确文件名',
+      // },
       placeholder: '请输入文件名',
     },
     label: '发布文件名',
@@ -73,46 +84,44 @@ export interface Options {
     accessToken: string;
     owner: string;
     repo: string;
-    keepPath: boolean;
+    category: string;
+    name: string;
   };
   note: Record<string, unknown>;
-  path?: string;
 }
 export const publish = async (
   options: Options,
   postProcess: (msg: Message) => void
 ) => {
   console.log('web publish start');
-  const { form, note, path } = options || {};
-  const { accessToken, owner, repo } = form;
+  const { form, note } = options || {};
+  const { accessToken, owner, repo, category, name } = form;
+  const formConfigs = getForm(note);
   // 校验参数
   if (!checkParams(form, formConfigs)) {
     console.log('参数校验失败');
     postProcess({
-      type: 'error',
-      message: '参数预校验失败',
-      help: {
-        description: '请检查配置参数或上报错误',
-        url: 'https://www.baidu.com',
-      },
+      time: new Date().getTime(),
+      process: 100,
+      content: '参数预校验失败，请检查配置参数或上报错误',
+      status: 'fail',
     });
     return;
   }
   if (!note) {
     postProcess({
-      type: 'error',
-      message: '发布内容为空',
-      help: {
-        description: '请检查笔记内容或接入情况',
-        url: 'https://www.baidu.com',
-      },
+      time: new Date().getTime(),
+      process: 100,
+      content: '发布内容为空，请检查笔记内容或接入情况',
+      status: 'fail',
     });
     return;
   }
 
   postProcess({
+    time: new Date().getTime(),
     process: 10,
-    message: '参数校验成功',
+    content: '参数校验成功',
   });
   const github = new Octokit({
     auth: accessToken,
@@ -124,8 +133,9 @@ export const publish = async (
     });
     console.log(repos);
     postProcess({
+      time: new Date().getTime(),
       process: 20,
-      message: '获取用户仓库成功',
+      content: '获取用户仓库成功',
     });
 
     // 仓库不存在就从模板新建仓库
@@ -148,16 +158,17 @@ export const publish = async (
         homepage: 'https://abc.com',
       });
       postProcess({
+        time: new Date().getTime(),
         process: 50,
-        message: '新建仓库成功',
+        content: '新建仓库成功',
       });
     }
 
     let publishPath: string; // 笔记发布路径
-    if (path === '' || path === undefined || path === null) {
-      publishPath = `笔记/${note.title}`;
+    if (category === '' || category === undefined || category === null) {
+      publishPath = `笔记/${name}`;
     } else {
-      publishPath = `笔记/${path}/${note.title}`;
+      publishPath = `笔记/${category}/${name}`;
     }
     console.log(publishPath);
 
@@ -179,8 +190,9 @@ export const publish = async (
       .then(sha => {
         console.log(sha);
         postProcess({
+          time: new Date().getTime(),
           process: 70,
-          message: '开始写入仓库',
+          content: '开始写入仓库',
         });
         return github.rest.repos.createOrUpdateFileContents({
           owner,
@@ -195,44 +207,38 @@ export const publish = async (
         console.log('新增/更新文件错误：', e);
         // e.code === 404
         postProcess({
-          type: 'error',
-          message: 'access_token权限不足',
-          help: {
-            description: '请参照示例重新生成有权限access_token',
-            url: 'https://www.baidu.com',
-          },
+          time: new Date().getTime(),
+          status: 'fail',
+          process: 100,
+          content: 'access_token权限不足，请参照示例重新生成有权限access_token',
+          link: '',
+          type: 'url',
         });
       });
 
     console.log(result);
     postProcess({
-      type: 'success',
-      message: '发布成功',
-      help: {
-        description: '-----',
-        url: 'https://www.baidu.com',
-      },
+      time: new Date().getTime(),
+      status: 'success',
+      content: '发布成功，点击查看发布地址',
+      process: 100,
+      link: 'https://www.baidu.com',
+      type: 'url',
     });
   } catch (e) {
     console.log('发布错误：', e);
     if (e.code === 500) {
       postProcess({
-        type: 'error',
-        message: '网络错误',
-        help: {
-          description: '请检查网络或需要VPN',
-          url: 'https://www.baidu.com',
-        },
+        time: new Date().getTime(),
+        status: 'fail',
+        content: '网络错误，请检查网络或需要VPN',
       });
     } else {
       // 区分code，401为auth错误
       postProcess({
-        type: 'error',
-        message: '用户名或access-token错误或已过期',
-        help: {
-          description: '请检查Github设置',
-          url: 'https://www.baidu.com',
-        },
+        time: new Date().getTime(),
+        status: 'fail',
+        content: '用户名或access-token错误或已过期',
       });
     }
   }

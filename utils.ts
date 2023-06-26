@@ -10,17 +10,41 @@ export enum DomType {
 export interface Config {
   dom: {
     type: DomType;
-    defaultValue?: string | boolean | number | null;
-    rules?: RegExp[];
-    placeholder?: string;
+    defaultValue?: string | boolean | number | null; // 如是DATEPICKER类型，应是'YYYY-MM-DD'格式
+    rule?: {
+      pattern?: RegExp; // input的校验正则规则
+      message?: string; // 错误显示信息
+      size?: {
+        height: CSSStyleDeclaration['height'];
+        width: CSSStyleDeclaration['width'];
+        maxBit?: number;
+      }; // 给图片上传使用，限制长宽比和最大体积限制，maxBit单位MB（默认1M: 1）
+    };
+    placeholder?: string; // input的placeholder，checkbox的框后文案（默认为label），图片上传的框内文案（默认为上传图片）
     required?: boolean;
+    options?: string[]; // Select下拉框选项，如没有，则用户自定义添加
   };
-  name: string;
-  label: string;
+  name: string; // 每一个form.item的name，需要唯一
+  label?: string; // 每一个form.item的label
   help?: {
     description: string;
     url?: string;
-  };
+  }; // 填写的帮助说明或文档
+}
+
+export interface Message {
+  time: number; // 时间戳
+  process?: number;
+  content: string;
+  link?: string; // 文字、图片、卡片超链接
+  type?: 'text' | 'url' | 'image' | 'card'; // message支持的类型，默认text
+  status?:
+    | 'init'
+    | 'pending'
+    | 'fail'
+    | 'publishing'
+    | 'unsupported'
+    | 'success'; // 默认为publishing
 }
 
 // 根据Confis检查参数
@@ -41,39 +65,24 @@ export const checkParams = (
   } else {
     configs.forEach(config => {
       const value = params[config.name as keyof typeof params];
-      // 当检测项包涵正则rules
-      if (config.dom.rules) {
-        config.dom.rules.forEach(rule => {
-          if (
-            !rule.test(String(value)) ||
-            value === undefined ||
-            value === null
-          ) {
-            matched = false;
-          }
-        });
+      if (config.dom.required && !value) {
+        matched = false;
       }
-      // 当检测项是Select型
-      // if（config.dom.type === 'SELECT') {
-
-      // }
+      // 当检测项包涵正则rules
+      if (config.dom.rule) {
+        if (
+          !config.dom.rule.pattern?.test(String(value)) ||
+          value === undefined ||
+          value === null
+        ) {
+          matched = false;
+        }
+      }
     });
   }
 
   return matched;
 };
-
-export interface Message {
-  process?: number;
-  message: string;
-  help?: {
-    url?: string;
-    description?: string;
-    author?: string;
-    link?: string;
-  }; // 一般是发布结束的发布成功页面或者失败说明，联系作者
-  type?: 'error' | 'success'; // 发布结束的状态，优先级最高
-}
 
 // 全选目标元素中内容进行更新
 export const editInput = async (

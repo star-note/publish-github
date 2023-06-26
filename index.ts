@@ -10,7 +10,7 @@ import {
 export const $publish_github = {
   key: 'github',
   label: 'Github',
-  logo: './icons/icon_128.png',
+  logo: 'github', // 可直接访问的logo公网地址；或者内置图片config中、这里为key
   web: {
     getForm,
     publish,
