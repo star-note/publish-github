@@ -172,8 +172,7 @@ export const publish = async (
         template_owner: 'star-note',
         template_repo: 'CHENJI-Template',
         name: repo,
-        description: '辰记发布',
-        homepage: 'https://abc.com',
+        description: '辰记发布', // TODO
       });
       postProcess({
         time: new Date().getTime(),
