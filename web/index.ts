@@ -1,6 +1,6 @@
 import { Octokit } from '@octokit/rest';
-import { encode } from 'js-base64';
-import { checkParams, Config, DomType, Message } from '../utils';
+import { encode, decode } from 'js-base64';
+import { checkParams, Config, DomType, getTimeStr, Message } from '../utils';
 
 export const getForm = (note): Config[] => [
   {
@@ -70,6 +70,7 @@ export const getForm = (note): Config[] => [
       //   message: '请输入正确文件名',
       // },
       placeholder: '请输入文件名',
+      required: true,
     },
     label: '发布文件名',
     name: 'name',
@@ -88,15 +89,32 @@ export interface Options {
     name: string;
   };
   note: Record<string, unknown>;
+  source?: {
+    homeUrl: string;
+    logo: string;
+    desc?: string;
+    title?: string;
+  };
+  user?: {
+    nickName: string;
+    id: string;
+    avatarUrl?: string;
+  };
 }
 export const publish = async (
   options: Options,
   postProcess: (msg: Message) => void
 ) => {
   console.log('web publish start');
-  const { form, note } = options || {};
+  const { form, note, source, user } = options || {};
   const { accessToken, owner, repo, category, name } = form;
   const formConfigs = getForm(note);
+  postProcess({
+    time: new Date().getTime(),
+    process: 1,
+    content: `辰记笔记发布Github开始，发布标题《${name}》`,
+    status: 'fail',
+  });
   // 校验参数
   if (!checkParams(form, formConfigs)) {
     console.log('参数校验失败');
@@ -142,13 +160,13 @@ export const publish = async (
     if (
       !(
         Array.isArray(repos.data) &&
-        repos.data.filter(item => item.name === repo).length === 1
+        repos.data.filter((item) => item.name === repo).length === 1
       )
     ) {
       console.log(
         '2222',
         repos.data,
-        repos.data.filter(item => item.name === repo)
+        repos.data.filter((item) => item.name === repo)
       );
       await github.rest.repos.createUsingTemplate({
         template_owner: 'star-note',
@@ -164,48 +182,97 @@ export const publish = async (
       });
     }
 
-    let publishPath: string; // 笔记发布路径
-    if (category === '' || category === undefined || category === null) {
-      publishPath = `笔记/${name}`;
-    } else {
-      publishPath = `笔记/${category}/${name}`;
-    }
-    console.log(publishPath);
+    // let publishPath: string; // 笔记发布路径
+    // if (category === '' || category === undefined || category === null) {
+    //   publishPath = `笔记/${name}`;
+    // } else {
+    //   publishPath = `笔记/${category}/${name}`;
+    // }
+    // console.log(publishPath);
 
-    // 仓库存在，先判断是否原文件存在，不存在新建，存在需拿到原文件的sha值再进行更新
-    const result = await github.rest.repos
-      .getContent({
-        owner,
-        repo,
-        path: publishPath,
-      })
-      .then(resp =>
-        !Array.isArray(resp) && !Array.isArray(resp.data)
-          ? resp.data.sha
-          : undefined
-      )
-      .catch(e => {
-        console.log('获取文件错误：', e);
-      })
-      .then(sha => {
-        console.log(sha);
-        postProcess({
-          time: new Date().getTime(),
-          process: 70,
-          content: '开始写入仓库',
-        });
-        return github.rest.repos.createOrUpdateFileContents({
+    // 更新文件公共函数：先判断是否原文件存在，不存在新建，存在需拿到原文件的sha值再进行更新
+    const updateFile = async (
+      path: string,
+      content: string,
+      keepOriContent = false,
+      successCB,
+      failCB?
+    ) => {
+      const result = await github.rest.repos
+        .getContent({
           owner,
           repo,
-          path: publishPath, // 笔记发布路径
-          message: '辰记发布-id-1', // 本次发布message
-          content: encode(JSON.stringify(note)), // 内容必须base64
-          ...(sha ? { sha } : null),
+          path,
+        })
+        .then((resp) =>
+          !Array.isArray(resp) && !Array.isArray(resp.data)
+            ? {
+                sha: resp.data.sha,
+                oriContent: resp.data.content,
+              }
+            : undefined
+        )
+        .catch((e) => {
+          console.log('获取文件错误：', e);
+        })
+        .then((data) => {
+          const { sha, oriContent } = data || {};
+          console.log(sha);
+          // postProcess({
+          //   time: new Date().getTime(),
+          //   process: 70,
+          //   content: '开始写入仓库',
+          // });
+          return github.rest.repos.createOrUpdateFileContents({
+            owner,
+            repo,
+            path, // 笔记发布路径
+            message: '辰记发布-id-1', // 本次发布message
+            content: encode(
+              keepOriContent ? `${decode(oriContent)}\n${content}` : content
+            ), // 内容必须base64
+            ...(sha ? { sha } : null),
+          });
+        })
+        .then((data) => {
+          if (successCB) successCB(data.data.content.html_url);
+          return data.data.content.html_url;
+        })
+        .catch((e) => {
+          console.log('新增/更新文件错误：', e);
+          if (failCB) failCB();
+          // e.code === 404
+          // postProcess({
+          //   time: new Date().getTime(),
+          //   status: 'fail',
+          //   process: 100,
+          //   content:
+          //     'access_token权限不足，请参照示例重新生成有权限access_token',
+          //   link: '',
+          //   type: 'url',
+          // });
         });
-      })
-      .catch(e => {
-        console.log('新增/更新文件错误：', e);
-        // e.code === 404
+
+      return result;
+    };
+
+    const publicPath = `Notes笔记/${category ? `${category}/` : ''}`;
+    // 发布 github 笔记
+    updateFile(
+      `${publicPath}${name}`,
+      note.html,
+      false,
+      (url) => {
+        postProcess({
+          time: new Date().getTime(),
+          status: 'success',
+          content: `发布 ${publicPath}${name} 成功，点击查看发布地址`,
+          process: 70,
+          link: url,
+          type: 'url',
+        });
+      },
+      () => {
         postProcess({
           time: new Date().getTime(),
           status: 'fail',
@@ -214,17 +281,66 @@ export const publish = async (
           link: '',
           type: 'url',
         });
-      });
+      }
+    );
 
-    console.log(result);
-    postProcess({
-      time: new Date().getTime(),
-      status: 'success',
-      content: '发布成功，点击查看发布地址',
-      process: 100,
-      link: 'https://www.baidu.com',
-      type: 'url',
-    });
+    const staticPath = 'static/data/';
+    // 发布 github page 需要的 layout 数据
+    updateFile(
+      `${staticPath}layout.js`,
+      `
+    layout.homeUrl='${source.homeUrl}';
+    layout.logo='${source.logo}';
+    layout.githubUrl='https://github.com/${owner}/${repo}';
+    `,
+      true,
+      (url) => {
+        postProcess({
+          time: new Date().getTime(),
+          status: 'success',
+          content: `发布 ${staticPath}layout.js 成功，点击查看发布地址`,
+          process: 80,
+          link: url,
+          type: 'url',
+        });
+      }
+    );
+    // 发布 github page 需要的 dataSource 数据
+    updateFile(
+      `${staticPath}dataSource.js`,
+      `
+    dataSource['CHENJI-Temple']=undefined;
+    dataSource['CHENJI-Temple2']=undefined;
+    if(dataSource['${category}']) {
+      dataSource['${category}'].push({
+        title: '${note.title}',
+        content: '${note.html}',
+        publishTime: '${getTimeStr()}',
+        category: '${category}',
+        noteId: '${note.id}'
+      });
+    }else{
+      dataSource['${category}']=[{
+        title: '${note.title}',
+        content: '${note.html}',
+        publishTime: '${getTimeStr()}',
+        category: '${category}',
+        noteId: '${note.id}'
+      }];
+    }
+    `,
+      true,
+      (url) => {
+        postProcess({
+          time: new Date().getTime(),
+          status: 'success',
+          content: `发布 ${staticPath}dataSource.js 成功，点击查看发布地址`,
+          process: 100,
+          link: url,
+          type: 'url',
+        });
+      }
+    );
   } catch (e) {
     console.log('发布错误：', e);
     if (e.code === 500) {

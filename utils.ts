@@ -105,3 +105,9 @@ export const editInput = async (
     callback(e);
   }
 };
+
+// 生成当前时间字符串
+export const getTimeStr = () => {
+  const time = new Date();
+  return `${time.getFullYear()}-${time.getMonth()}-${time.getDate()} ${time.getHours()}:${time.getMinutes()}:${time.getSeconds()}`;
+}
