@@ -202,6 +202,7 @@ export const publish = async (
           owner,
           repo,
           path,
+          ref: 'master',
         })
         .then((resp) =>
           !Array.isArray(resp) && !Array.isArray(resp.data)
@@ -230,6 +231,7 @@ export const publish = async (
             content: encode(
               keepOriContent ? `${decode(oriContent)}\n${content}` : content
             ), // 内容必须base64
+            ref: 'master',
             ...(sha ? { sha } : null),
           });
         })
